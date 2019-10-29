@@ -44,11 +44,12 @@ import requests
  
 class Startup(object):
  
-    def __init__(self, hostname, user, secret):
+    def __init__(self, hostname, user, secret, validate_ssl):
         self._hostname = hostname
         self._user = user
         self._secret = secret
- 
+        self._validate_ssl = validate_ssl
+
         self._ep = 'http://%s/api/v1.0' % hostname
  
     def request(self, resource, method='GET', data=None):
@@ -61,6 +62,7 @@ class Startup(object):
                 data=json.dumps(data),
                 headers={'Content-Type': "application/json"},
                 auth=(self._user, self._secret),
+                verify=self._validate_ssl
             )
         except:
             print 'UNKNOWN - Error when contacting freenas server: ' + str(sys.exc_info())
@@ -136,10 +138,15 @@ def main():
     parser.add_argument('-u', '--user', required=True, type=str, help='Normally only root works')
     parser.add_argument('-p', '--passwd', required=True, type=str, help='Password')
     parser.add_argument('-t', '--type', required=True, type=str, help='Type of check, either repl, alerts or updates')
+    parser.add_argument('--validate_ssl', required=False, default="True", type=str, help='validate ssl True or False')
  
     args = parser.parse_args(sys.argv[1:])
  
-    startup = Startup(args.hostname, args.user, args.passwd)
+    if args.validate_ssl.upper == 'TRUE' :
+        startup = Startup(args.hostname, args.user, args.passwd, True)
+    else:
+        startup = Startup(args.hostname, args.user, args.passwd, False)
+
  
     if args.type == 'alerts':
         startup.check_alerts()
